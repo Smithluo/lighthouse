@@ -54,7 +54,7 @@ class NoDateNowAudit extends Audit {
       });
     }
 
-    const pageHost = url.parse(artifacts.URL).host;
+    const pageHost = url.parse(artifacts.URL.finalUrl).host;
 
     // Filter out Date.now() usage from scripts on other domains.
     const results = artifacts.DateNowUse.errors.reduce((prev, err) => {
