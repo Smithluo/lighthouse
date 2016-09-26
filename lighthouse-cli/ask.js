@@ -29,7 +29,7 @@ function ask(question, options) {
     iface.setPrompt(question + '\r\n' + optionsStr + '\r\nChoice: ');
     iface.prompt();
 
-    iface.on('line', _answer => {
+    iface.on('line', _answer => {//
       const answer = toInt(_answer);
       if (answer > 0 && answer <= options.length) {
         iface.close();
