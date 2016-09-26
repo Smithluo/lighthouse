@@ -6,7 +6,7 @@
       "../gather/gatherers/dobetterweb/appcache",
       "../gather/gatherers/dobetterweb/websql",
       "../gather/gatherers/https",
-      "../gather/gatherers/same-origin-resources"
+      "../gather/gatherers/url"
     ]
   }],
 

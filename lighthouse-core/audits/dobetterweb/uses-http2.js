@@ -18,10 +18,12 @@
 /**
  * @fileoverview Audit a page to ensure that resource loaded over its own
  * origin are over the http/2 protocol.
+ * @author Eric Bidelman
  */
 
 'use strict';
 
+const url = require('url');
 const Audit = require('../audit');
 const Formatter = require('../../formatters/formatter');
 
@@ -36,7 +38,7 @@ class UsesHTTP2Audit extends Audit {
       name: 'uses-http2',
       description: 'Site uses HTTP/2 for its own resources',
       helpText: 'h2 offers many benefits over its http/1.1 predecessor: binary, multiplexing, server push, etc. See <a href="https://http2.github.io/faq/" target="_blank">this FAQ</a> for more information.',
-      requiredArtifacts: ['SameOriginResources']
+      requiredArtifacts: ['URL', 'networkRecords']
     };
   }
 
@@ -45,17 +47,23 @@ class UsesHTTP2Audit extends Audit {
    * @return {!AuditResult}
    */
   static audit(artifacts) {
-    if (typeof artifacts.SameOriginResources === 'undefined' ||
-        !Array.isArray(artifacts.SameOriginResources)) {
+    if (typeof artifacts.networkRecords === 'undefined' ||
+        artifacts.URL === 'undefined') {
       return UsesHTTP2Audit.generateAuditResult({
         rawValue: -1,
-        debugString: 'SameOriginResources gatherer did not run'
+        debugString: 'Network or URL gatherer did not run'
       });
     }
 
-    // Filter the non h2 resources.
-    const resources = artifacts.SameOriginResources.filter(record => {
-      return /HTTP\/[01][\.\d]?/i.test(record.protocol);
+    const networkRecords = artifacts.networkRecords[Audit.DEFAULT_PASS];
+    const finalHost = url.parse(artifacts.URL.finalUrl).host;
+
+    // Filter requests that are on the same origin as the page and not over h2.
+    const resources = networkRecords.filter(record => {
+      const requestHost = url.parse(record._url).host;
+      const sameOrigin = requestHost === finalHost;
+      const notH2 = /HTTP\/[01][\.\d]?/i.test(record.protocol);
+      return sameOrigin && notH2;
     });
 
     const displayValue = (resources.length ?

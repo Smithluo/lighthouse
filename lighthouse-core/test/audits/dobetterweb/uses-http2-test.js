@@ -18,9 +18,13 @@
 const UsesHTTP2Audit = require('../../../audits/dobetterweb/uses-http2.js');
 const assert = require('assert');
 
+const URL = 'https://webtide.com/http2-push-demo/';
+const networkRecords = require('../../fixtures/networkRecords-mix.json');
+const h2Records = require('../../fixtures/networkRecords-h2push.json');
+
 /* eslint-env mocha */
 
-describe('Resources are fetched over http/2', () => {
+describe.only('Resources are fetched over http/2', () => {
   it('fails when no input present', () => {
     const auditResult = UsesHTTP2Audit.audit({});
     assert.equal(auditResult.rawValue, -1);
@@ -29,21 +33,18 @@ describe('Resources are fetched over http/2', () => {
 
   it('fails when some resources were requested via http/1.x', () => {
     const auditResult = UsesHTTP2Audit.audit({
-      SameOriginResources: [
-        {url: 'http://example.com/one', protocol: 'http/1.1'},
-        {url: 'http://example.com/two', protocol: 'http/1.0'}
-      ]
+      URL: {finalUrl: URL},
+      networkRecords: {[UsesHTTP2Audit.DEFAULT_PASS]: networkRecords}
     });
     assert.equal(auditResult.rawValue, false);
-    assert.ok(auditResult.displayValue.match('2 resources were not'));
+    assert.ok(auditResult.displayValue.match('4 resources were not'));
+    assert.equal(auditResult.extendedInfo.value.length, 4);
   });
 
   it('passes when all resources were requested via http/2', () => {
     const auditResult = UsesHTTP2Audit.audit({
-      SameOriginResources: [
-        {url: 'http://example.com/one', protocol: 'h2'},
-        {url: 'http://example.com/two', protocol: 'h2'}
-      ]
+      URL: {finalUrl: URL},
+      networkRecords: {[UsesHTTP2Audit.DEFAULT_PASS]: h2Records}
     });
     assert.equal(auditResult.rawValue, true);
     assert.ok(auditResult.displayValue === '');
